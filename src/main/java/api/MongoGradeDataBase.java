@@ -62,13 +62,11 @@ public class MongoGradeDataBase implements GradeDataBase {
                         .course(grade.getString(COURSE))
                         .grade(grade.getInt(GRADE))
                         .build();
-            }
-            else {
+            } else {
                 throw new RuntimeException("Grade could not be found for course: " + course
-                                           + " and username: " + username);
+                        + " and username: " + username);
             }
-        }
-        catch (IOException | JSONException event) {
+        } catch (IOException | JSONException event) {
             throw new RuntimeException(event);
         }
     }
@@ -105,12 +103,10 @@ public class MongoGradeDataBase implements GradeDataBase {
                             .build();
                 }
                 return result;
-            }
-            else {
+            } else {
                 throw new RuntimeException(responseBody.getString(MESSAGE));
             }
-        }
-        catch (IOException | JSONException event) {
+        } catch (IOException | JSONException event) {
             throw new RuntimeException(event);
         }
     }
@@ -137,12 +133,10 @@ public class MongoGradeDataBase implements GradeDataBase {
 
             if (responseBody.getInt(STATUS_CODE) == SUCCESS_CODE) {
                 return null;
-            }
-            else {
+            } else {
                 throw new RuntimeException(responseBody.getString(MESSAGE));
             }
-        }
-        catch (IOException | JSONException event) {
+        } catch (IOException | JSONException event) {
             throw new RuntimeException(event);
         }
     }
@@ -178,12 +172,10 @@ public class MongoGradeDataBase implements GradeDataBase {
                         .name(team.getString(NAME))
                         .members(members)
                         .build();
-            }
-            else {
+            } else {
                 throw new RuntimeException(responseBody.getString(MESSAGE));
             }
-        }
-        catch (IOException | JSONException event) {
+        } catch (IOException | JSONException event) {
             throw new RuntimeException(event);
         }
     }
@@ -209,12 +201,10 @@ public class MongoGradeDataBase implements GradeDataBase {
 
             if (responseBody.getInt(STATUS_CODE) == SUCCESS_CODE) {
                 return null;
-            }
-            else {
+            } else {
                 throw new RuntimeException(responseBody.getString(MESSAGE));
             }
-        }
-        catch (IOException | JSONException event) {
+        } catch (IOException | JSONException event) {
             throw new RuntimeException(event);
         }
     }
@@ -240,8 +230,7 @@ public class MongoGradeDataBase implements GradeDataBase {
             if (responseBody.getInt(STATUS_CODE) != SUCCESS_CODE) {
                 throw new RuntimeException(responseBody.getString(MESSAGE));
             }
-        }
-        catch (IOException | JSONException event) {
+        } catch (IOException | JSONException event) {
             throw new RuntimeException(event);
         }
     }
@@ -261,13 +250,33 @@ public class MongoGradeDataBase implements GradeDataBase {
                 .addHeader(CONTENT_TYPE, APPLICATION_JSON)
                 .build();
 
-        final Response response;
-        final JSONObject responseBody;
+        try {
+            final Response response = client.newCall(request).execute();
+            final JSONObject responseBody = new JSONObject(response.body().string());
+            if (responseBody.getInt(STATUS_CODE) == SUCCESS_CODE) {
+
+                final JSONObject team = responseBody.getJSONObject("team");
+                String[] members = new String[team.getJSONArray("members").length()];
+                for (int i = 0; i < team.getJSONArray("members").length(); i++) {
+                    members[i] = team.getJSONArray("members").getString(i);
+                }
+                return Team.builder()
+                        .name(team.getJSONObject("_id").getString("$oid"))
+                        .members(members)
+                        .build();
+
+
+            } else {
+                throw new RuntimeException("Team could not be found");
+            }
+        } catch (IOException | JSONException event) {
+            throw new RuntimeException(event);
+        }
+
 
         // TODO Task 3b: Implement the logic to get the team information
         // HINT 1: Look at the formTeam method to get an idea on how to parse the response
         // HINT 2: You may find it useful to just initially print the contents of the JSON
         //         then work on the details of how to parse it.
-        return null;
     }
 }
